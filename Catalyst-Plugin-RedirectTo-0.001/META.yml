@@ -1,0 +1,23 @@
+---
+abstract: 'Helpers to set the current model or view instance'
+author:
+  - 'John Napiorkowski <jjnapiork@cpan.org>'
+build_requires:
+  Test::Most: '0'
+configure_requires:
+  ExtUtils::MakeMaker: '0'
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 5.032, CPAN::Meta::Converter version 2.143240'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: '1.4'
+name: Catalyst-Plugin-RedirectTo
+requires:
+  Catalyst: '5.90060'
+  Moose::Role: '2.0602'
+resources:
+  bugtracker: https://github.com/jjn1056/Catalyst-Plugin-CurrentComponents/issues
+  homepage: https://github.com/jjn1056/Catalyst-Plugin-CurrentComponents
+  repository: https://github.com/jjn1056/Catalyst-Plugin-CurrentComponents.git
+version: '0.001'

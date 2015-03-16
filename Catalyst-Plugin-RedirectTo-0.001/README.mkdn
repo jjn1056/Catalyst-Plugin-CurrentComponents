@@ -1,0 +1,75 @@
+# NAME
+
+Catalyst::Plugin::CurrentComponents - Declare current components more easily.
+
+# SYNOPSIS
+
+Use the plugin in your application class:
+
+    package MyApp;
+    use Catalyst 'CurrentComponents';
+
+    MyApp->setup;
+
+Then you can use it in your controllers:
+
+    package MyApp::Controller::Example;
+
+    use base 'Catalyst::Controller';
+
+    sub current_model_instance {
+      my ($self, $c) = @_;
+      return $c->model("Form::Login", user_database => $c->model('Users'));
+    }
+
+    sub myaction :Local {
+      my ($self, $c) = @_;
+      my $c->model; # Isa 'MyApp::Model::Form::Login', or whatever that returns;
+    }
+
+# DESCRIPTION
+
+This plugin gives you an alternative to setting the current\_view|model(\_instance)
+via a controller method or via context helper methods.  You may find this a
+more readable approach than setting it via the stash.
+
+Please Seee documention about Views and Models in [Catalyst](https://metacpan.org/pod/Catalyst).
+
+# METHODS
+
+This plugin adds the following methods to your context.
+
+## current\_model
+
+Sets $c->stash->{current\_model} if an argument is passed.  Always returns the
+current value of this stash key
+
+## current\_model\_instance
+
+Sets $c->stash->{current\_model\_instance} if an argument is passed.  Always returns the
+current value of this stash key
+
+## current\_view
+
+Sets $c->stash->{current\_view} if an argument is passed.  Always returns the
+current value of this stash key
+
+## current\_view\_instance
+
+Sets $c->stash->{current\_view\_instance} if an argument is passed.  Always returns the
+current value of this stash key
+
+# AUTHOR
+
+John Napiorkowski [email:jjnapiork@cpan.org](email:jjnapiork@cpan.org)
+
+# SEE ALSO
+
+[Catalyst](https://metacpan.org/pod/Catalyst), [Catalyst::Response](https://metacpan.org/pod/Catalyst::Response)
+
+# COPYRIGHT & LICENSE
+
+Copyright 2015, John Napiorkowski [email:jjnapiork@cpan.org](email:jjnapiork@cpan.org)
+
+This library is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
