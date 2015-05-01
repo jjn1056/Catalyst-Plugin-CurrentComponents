@@ -4,7 +4,7 @@ use Moose::Role;
 
 requires 'model', 'view', 'stash';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 sub current_model {
   my ($self, $model) = @_;
@@ -16,9 +16,10 @@ sub current_model {
 }
 
 sub current_model_instance {
-  my ($self, $model) = @_;
+  my ($self, $model, @args) = @_;
   return unless ref $self;
   if(defined($model)) {
+    $model = $self->model($model, @args) unless ref $model;
     $self->stash->{current_model_instance} = $model;
   }
   return $self->stash->{current_model_instance};
@@ -34,9 +35,10 @@ sub current_view {
 }
 
 sub current_view_instance {
-  my ($self, $view) = @_;
+  my ($self, $view, @args) = @_;
   return unless ref $self;
   if(defined($view)) {
+    $view = $self->view($view, @args) unless ref $view;
     $self->stash->{current_view_instance} = $view;
   }
   return $self->stash->{current_view_instance};
@@ -49,14 +51,13 @@ around 'model', sub {
       !defined($self->stash->{current_model_instance}) &&
       $self->controller->can('current_model_instance')
     ) {
-      my $model = $self->controller->current_model_instance($self);
-      $self->stash->{current_model_instance} = $model if defined($model);
+      $self->current_model_instance(
+        $self->controller->current_model_instance($self));
     } elsif(
       !defined($self->stash->{current_model}) &&
       $self->controller->can('current_model')
     ) {
-      my $model = $self->controller->current_model($self);
-      $self->stash->{current_model} = $model if defined($model);
+      $self->current_model($self->controller->current_model($self));
     }
   }
   return $self->$orig($name, @args);
@@ -69,14 +70,13 @@ around 'view', sub {
       !defined($self->stash->{current_view_instance}) &&
       $self->controller->can('current_viewl_instance')
     ) {
-      my $view = $self->controller->current_view_instance($self);
-      $self->stash->{current_view_instance} = $view if defined($view);
+      $self->current_view_instance(
+        $self->controller->current_view_instance($self));
     } elsif(
       !defined($self->stash->{current_view}) &&
       $self->controller->can('current_view')
     ) {
-      my $view = $self->controller->current_view($self);
-      $self->stash->{current_view} = $view if defined($view);
+      $self->current_view($self->controller->current_view($self));
     }
   }
   return $self->$orig($name, @args);
@@ -128,22 +128,24 @@ This plugin adds the following methods to your context.
 =head2 current_model
 
 Sets $c->stash->{current_model} if an argument is passed.  Always returns the
-current value of this stash key
+current value of this stash key.  Expects the string name of a model.
 
 =head2 current_model_instance
 
 Sets $c->stash->{current_model_instance} if an argument is passed.  Always returns the
-current value of this stash key
+current value of this stash key.  Expects either the instance of an already created
+model or can accept arguments that can be validly submitted to $c->model.
 
 =head2 current_view
 
 Sets $c->stash->{current_view} if an argument is passed.  Always returns the
-current value of this stash key
+current value of this stash key.  Expects the string new of a view.
 
 =head2 current_view_instance
 
 Sets $c->stash->{current_view_instance} if an argument is passed.  Always returns the
-current value of this stash key
+current value of this stash key.  Expects either the instance of an already created
+view or can accept arguments that can be validly submitted to $c->view.
 
 =head1 AUTHOR
 
