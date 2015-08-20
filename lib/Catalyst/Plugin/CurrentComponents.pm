@@ -149,6 +149,9 @@ This plugin gives you an alternative to setting the current_view|model(_instance
 via a controller method or via context helper methods.  You may find this a
 more readable approach than setting it via the stash.
 
+You may also enable a global option to set the current_model_instance via the
+return value of a match method.  See L</CONFIGURATION>
+
 Please Seee documention about Views and Models in L<Catalyst>.
 
 =head1 METHODS
