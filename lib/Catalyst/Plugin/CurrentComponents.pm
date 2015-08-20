@@ -1,10 +1,25 @@
 package Catalyst::Plugin::CurrentComponents;
 
 use Moose::Role;
+use Scalar::Util ();
 
 requires 'model', 'view', 'stash';
 
 our $VERSION = '0.002';
+
+has 'model_instance_from_return' => (
+  is=>'ro',
+  isa=>'Bool',
+  lazy=>1,
+  builder=>'_build_model_instance_from_return');
+
+  sub _build_model_instance_from_return {
+    if(my $config = shift->config->{'Plugin::CurrentComponents'}) {
+      return exists $config->{model_from_return} ? $config->{model_from_return} : 0;
+    } else {
+      return 0;
+    }
+  }
 
 sub current_model {
   my ($self, $model) = @_;
@@ -43,6 +58,21 @@ sub current_view_instance {
   }
   return $self->stash->{current_view_instance};
 }
+
+around 'execute', sub {
+  my ($orig, $self, $class, $code, @rest ) = @_;
+  my $state = $self->$orig($class, $code, @rest);
+
+  if(
+    defined $state &&
+    Scalar::Util::blessed($state) &&
+    $self->model_instance_from_return
+  ) {
+    $self->current_model_instance($state);
+  }
+
+  return $state;
+};
 
 around 'model', sub {
   my ($orig, $self, $name, @args) = @_;
@@ -146,6 +176,24 @@ current value of this stash key.  Expects the string new of a view.
 Sets $c->stash->{current_view_instance} if an argument is passed.  Always returns the
 current value of this stash key.  Expects either the instance of an already created
 view or can accept arguments that can be validly submitted to $c->view.
+
+=head1 CONFIGURATION
+
+This plugin supports configuration under the "Plugin::CurrentComponents" key.
+For example:
+
+    MyApp->config(
+      'Plugin::CurrentComponents' => {
+        model_instance_from_return => 1,
+      },
+    );
+
+=head2 model_instance_from_return
+
+Allows one to set the current_model_instance from the return value of a matched
+action.  Please note this is an experimental option which is off by default.
+The return value must be a defined, blessed objected for this behavior to take
+place.
 
 =head1 AUTHOR
 

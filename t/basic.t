@@ -6,6 +6,10 @@ use Test::Most;
 
   use base 'Catalyst::Model';
 
+  package MyApp::Model::CurrentModel2;
+  $INC{'MyApp/Model/CurrentModel2.pm'} = __FILE__;
+
+  use base 'Catalyst::Model';
   package MyApp::View::CurrentView;
   $INC{'MyApp/View/CurrentView.pm'} = __FILE__;
 
@@ -88,9 +92,28 @@ use Test::Most;
     $c->res->body(ref $c->view);
   }
 
+  sub set_by_return :Chained(/) CaptureArgs(0) {
+    my ($self, $c) = @_;
+    return $c->model('CurrentModel2');
+  }
+
+    sub midpoint :Chained('set_by_return') PathPart('') CaptureArgs(0) {
+      my ($self, $c) = @_;
+    }
+
+      sub endpoint :Chained('midpoint') PathPart('') Args(0) {
+        my ($self, $c) = @_;
+        $c->res->body(ref $c->model);
+      }
+
   package MyApp;
   use Catalyst 'CurrentComponents';
 
+  MyApp->config(
+    default_model=>'CurrentModel',
+    'Plugin::CurrentComponents' => { model_from_return => 1},
+  );
+  
   MyApp->setup;
 }
 
@@ -134,6 +157,11 @@ use Catalyst::Test 'MyApp';
 {
   my $res = request "/methods/current_view_instance_action";
   is $res->content, 'MyApp::View::CurrentView';
+}
+
+{
+  my $res = request "/set_by_return";
+  is $res->content, 'MyApp::Model::CurrentModel2';
 }
 
 done_testing;
