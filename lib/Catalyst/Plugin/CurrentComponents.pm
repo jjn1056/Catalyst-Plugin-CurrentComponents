@@ -5,7 +5,7 @@ use Scalar::Util ();
 
 requires 'model', 'view', 'stash';
 
-our $VERSION = '0.002';
+our $VERSION = '0.004';
 
 has 'model_instance_from_return' => (
   is=>'ro',
@@ -15,7 +15,7 @@ has 'model_instance_from_return' => (
 
   sub _build_model_instance_from_return {
     if(my $config = shift->config->{'Plugin::CurrentComponents'}) {
-      return exists $config->{model_from_return} ? $config->{model_from_return} : 0;
+      return exists $config->{model_instance_from_return} ? $config->{model_instance_from_return} : 0;
     } else {
       return 0;
     }
@@ -68,7 +68,14 @@ around 'execute', sub {
     Scalar::Util::blessed($state) &&
     $self->model_instance_from_return
   ) {
+    $self->log->debug("Setting 'current_model_instance' to $state") if $self->debug;
     $self->current_model_instance($state);
+  } else {
+      $self->log->debug($state) if $self->debug;
+      $self->log->debug( $self->model_instance_from_return) if $self->debug;
+
+    $self->log->debug("NOT setting current mdoel instance......") if $self->debug;
+
   }
 
   return $state;

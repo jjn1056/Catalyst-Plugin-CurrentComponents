@@ -111,7 +111,7 @@ use Test::Most;
 
   MyApp->config(
     default_model=>'CurrentModel',
-    'Plugin::CurrentComponents' => { model_from_return => 1},
+    'Plugin::CurrentComponents' => { model_instance_from_return => 1},
   );
   
   MyApp->setup;
