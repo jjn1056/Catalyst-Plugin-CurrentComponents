@@ -68,14 +68,7 @@ around 'execute', sub {
     Scalar::Util::blessed($state) &&
     $self->model_instance_from_return
   ) {
-    $self->log->debug("Setting 'current_model_instance' to $state") if $self->debug;
     $self->current_model_instance($state);
-  } else {
-      $self->log->debug($state) if $self->debug;
-      $self->log->debug( $self->model_instance_from_return) if $self->debug;
-
-    $self->log->debug("NOT setting current mdoel instance......") if $self->debug;
-
   }
 
   return $state;
