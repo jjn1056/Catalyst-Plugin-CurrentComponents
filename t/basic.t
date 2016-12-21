@@ -92,18 +92,32 @@ use Test::Most;
     $c->res->body(ref $c->view);
   }
 
-  sub set_by_return :Chained(/) CaptureArgs(0) {
+  sub set_model_by_return :Chained(/) CaptureArgs(0) {
     my ($self, $c) = @_;
     return $c->model('CurrentModel2');
   }
 
-    sub midpoint :Chained('set_by_return') PathPart('') CaptureArgs(0) {
+    sub midpoint :Chained('set_model_by_return') PathPart('') CaptureArgs(0) {
       my ($self, $c) = @_;
     }
 
       sub endpoint :Chained('midpoint') PathPart('') Args(0) {
         my ($self, $c) = @_;
         $c->res->body(ref $c->model);
+      }
+
+  sub set_view_by_return :Chained(/) CaptureArgs(0) {
+    my ($self, $c) = @_;
+    return $c->model('CurrentView');
+  }
+
+    sub midpoint2 :Chained('set_view_by_return') PathPart('') CaptureArgs(0) {
+      my ($self, $c) = @_;
+    }
+
+      sub endpoint2 :Chained('midpoint2') PathPart('') Args(0) {
+        my ($self, $c) = @_;
+        $c->res->body(ref $c->view);
       }
 
   package MyApp;
@@ -160,8 +174,13 @@ use Catalyst::Test 'MyApp';
 }
 
 {
-  my $res = request "/set_by_return";
+  my $res = request "/set_model_by_return";
   is $res->content, 'MyApp::Model::CurrentModel2';
+}
+
+{
+  my $res = request "/set_view_by_return";
+  is $res->content, 'MyApp::View::CurrentView';
 }
 
 done_testing;

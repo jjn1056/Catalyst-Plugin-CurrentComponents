@@ -1,21 +1,27 @@
 package Catalyst::Plugin::CurrentComponents;
 
-use Moose::Role;
+use Moo::Role;
 use Scalar::Util ();
 
 requires 'model', 'view', 'stash';
 
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
-has 'model_instance_from_return' => (
-  is=>'ro',
-  isa=>'Bool',
-  lazy=>1,
-  builder=>'_build_model_instance_from_return');
+has 'model_instance_from_return' => (is=>'lazy');
 
   sub _build_model_instance_from_return {
     if(my $config = shift->config->{'Plugin::CurrentComponents'}) {
       return exists $config->{model_instance_from_return} ? $config->{model_instance_from_return} : 0;
+    } else {
+      return 0;
+    }
+  }
+
+has 'view_instance_from_return' => (is=>'lazy');
+
+  sub _build_view_instance_from_return {
+    if(my $config = shift->config->{'Plugin::CurrentComponents'}) {
+      return exists $config->{view_instance_from_return} ? $config->{view_instance_from_return} : 0;
     } else {
       return 0;
     }
@@ -66,9 +72,13 @@ around 'execute', sub {
   if(
     defined $state &&
     Scalar::Util::blessed($state) &&
-    $self->model_instance_from_return
+    ($self->model_instance_from_return || $self->view_instance_from_return)
   ) {
-    $self->current_model_instance($state);
+    if($self->model_instance_from_return && $state->isa('Catalyst::Model')) {
+      $self->current_model_instance($state);
+    } elsif($self->view_instance_from_return && $state->isa('Catalyst::View')) {
+      $self->current_view_instance($state);
+    }
   }
 
   return $state;
@@ -125,6 +135,14 @@ Use the plugin in your application class:
     package MyApp;
     use Catalyst 'CurrentComponents';
 
+    # Optional configuration
+    MyApp->config(
+      'Plugin::CurrentComponents' => {
+        model_instance_from_return => 1,
+        view_instance_from_return => 1,
+      },
+    );
+
     MyApp->setup;
 
 Then you can use it in your controllers:
@@ -143,14 +161,24 @@ Then you can use it in your controllers:
       my $c->model; # Isa 'MyApp::Model::Form::Login', or whatever that returns;
     }
 
+    sub set_model :Local {
+      my ($self, $c) = @_;
+      $c->current_model_instance($c->model('Foo')); # $c->model ISA 'MyApp::Model::Foo
+    }
+
+    sub set_view :Local {
+      my ($self, $c) = @_;
+      $c->current_view_instance($c->view('Bar')); # $c->view ISA 'MyApp::View::Bar
+    }
+
 =head1 DESCRIPTION
 
 This plugin gives you an alternative to setting the current_view|model(_instance)
 via a controller method or via context helper methods.  You may find this a
 more readable approach than setting it via the stash.
 
-You may also enable a global option to set the current_model_instance via the
-return value of a match method.  See L</CONFIGURATION>
+You may also enable a global option to set the current_model_instance or the
+current_view_instance via the return value of an action.  See L</CONFIGURATION>
 
 Please Seee documention about Views and Models in L<Catalyst>.
 
@@ -180,6 +208,18 @@ Sets $c->stash->{current_view_instance} if an argument is passed.  Always return
 current value of this stash key.  Expects either the instance of an already created
 view or can accept arguments that can be validly submitted to $c->view.
 
+=head1 CONTROLLER METHODS
+
+This plugin will inspect the current controller for the following methods
+
+=head2 current_model
+
+=head2 current_model_instance
+
+Same as the context methods, but lets you set this at a controller level.  Useful
+for base classes or roles.  Example:
+
+
 =head1 CONFIGURATION
 
 This plugin supports configuration under the "Plugin::CurrentComponents" key.
@@ -188,6 +228,7 @@ For example:
     MyApp->config(
       'Plugin::CurrentComponents' => {
         model_instance_from_return => 1,
+        view_instance_from_return => 1,
       },
     );
 
@@ -195,8 +236,25 @@ For example:
 
 Allows one to set the current_model_instance from the return value of a matched
 action.  Please note this is an experimental option which is off by default.
-The return value must be a defined, blessed objected for this behavior to take
-place.
+The return value must be a defined, blessed objected that ISA L<Catalyst::Model>
+for this to work.  Example:
+
+    sub set_model_by_return :Chained(/) CaptureArgs(0) {
+      my ($self, $c) = @_;
+      return $c->model('CurrentModel'); # $c->model ISA 'MyApp::Model::CurrentModel'
+    }
+
+=head2 view_instance_from_return
+
+Allows one to set the current_view_instance from the return value of a matched
+action.  Please note this is an experimental option which is off by default.
+The return value must be a defined, blessed objected that ISA L<Catalyst::View>
+for this to work.  Example:
+
+    sub set_view_by_return :Chained(/) CaptureArgs(0) {
+      my ($self, $c) = @_;
+      return $c->view('CurrentView'); # $c->view  ISA 'MyApp::View::CurrentView'
+    }
 
 =head1 AUTHOR
 
@@ -208,7 +266,7 @@ L<Catalyst>, L<Catalyst::Response>
 
 =head1 COPYRIGHT & LICENSE
  
-Copyright 2015, John Napiorkowski L<email:jjnapiork@cpan.org>
+Copyright 2016, John Napiorkowski L<email:jjnapiork@cpan.org>
  
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
