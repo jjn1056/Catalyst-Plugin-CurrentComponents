@@ -5,7 +5,7 @@ use Scalar::Util ();
 
 requires 'model', 'view', 'stash';
 
-our $VERSION = '0.005';
+our $VERSION = '0.006';
 
 has 'model_instance_from_return' => (is=>'lazy');
 
@@ -74,9 +74,13 @@ around 'execute', sub {
     Scalar::Util::blessed($state) &&
     ($self->model_instance_from_return || $self->view_instance_from_return)
   ) {
-    if($self->model_instance_from_return && $state->isa('Catalyst::Model')) {
+    my $state_class = ref($state);
+    my $app_class = ref($self);
+    $state_class =~s/^$app_class\:\:(Model|View)\:\://;
+    
+    if($self->model_instance_from_return && $self->model($state_class)) {
       $self->current_model_instance($state);
-    } elsif($self->view_instance_from_return && $state->isa('Catalyst::View')) {
+    } elsif($self->view_instance_from_return && $self->view($state_class)) {
       $self->current_view_instance($state);
     }
   }
