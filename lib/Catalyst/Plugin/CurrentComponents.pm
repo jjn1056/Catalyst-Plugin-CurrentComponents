@@ -5,13 +5,23 @@ use Scalar::Util ();
 
 requires 'model', 'view', 'stash';
 
-our $VERSION = '0.006';
+our $VERSION = '0.007';
 
 has 'model_instance_from_return' => (is=>'lazy');
 
   sub _build_model_instance_from_return {
     if(my $config = shift->config->{'Plugin::CurrentComponents'}) {
       return exists $config->{model_instance_from_return} ? $config->{model_instance_from_return} : 0;
+    } else {
+      return 0;
+    }
+  }
+
+has 'model_instance_from_state' => (is=>'lazy');
+
+  sub _build_model_instance_from_state {
+    if(my $config = shift->config->{'Plugin::CurrentComponents'}) {
+      return exists $config->{model_instance_from_state} ? $config->{model_instance_from_state} : 0;
     } else {
       return 0;
     }
@@ -82,6 +92,10 @@ around 'execute', sub {
       $self->current_model_instance($state);
     } elsif($self->view_instance_from_return && $self->view($state_class)) {
       $self->current_view_instance($state);
+    } elsif($self->model_instance_from_state) {
+      # Its an object but its not a view, but allow it anyway.  Maybe terrible
+      # idea but for backcompat at least.
+      $self->current_model_instance($state);
     }
   }
 
@@ -112,7 +126,7 @@ around 'view', sub {
   if(!defined($name) && ref($self)) {
     if(
       !defined($self->stash->{current_view_instance}) &&
-      $self->controller->can('current_viewl_instance')
+      $self->controller->can('current_view_instance')
     ) {
       $self->current_view_instance(
         $self->controller->current_view_instance($self));
@@ -260,6 +274,20 @@ for this to work.  Example:
       return $c->view('CurrentView'); # $c->view  ISA 'MyApp::View::CurrentView'
     }
 
+=head2 model_instance_from_state
+
+Often you want to set your current model instance to 'any type of object'.  The
+configuration L</model_instance_from_return> expects the object to be something
+in the 'MyApp::Model' namespace.  If this is not the case you can use this option.
+
+    sub set_model_from_resultset :Chained CaptureArgs(1) {
+      my ($self, $c, $id) = @_;
+      return $c->model("Schema::User")->find($id);
+    }
+
+In this case the object returned is probably a 'MyApp::Schema::Result::User' so
+the option L</model_instance_from_return> would not have worked.
+
 =head1 AUTHOR
 
 John Napiorkowski L<email:jjnapiork@cpan.org>
@@ -270,7 +298,7 @@ L<Catalyst>, L<Catalyst::Response>
 
 =head1 COPYRIGHT & LICENSE
  
-Copyright 2016, John Napiorkowski L<email:jjnapiork@cpan.org>
+Copyright 2017, John Napiorkowski L<email:jjnapiork@cpan.org>
  
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.

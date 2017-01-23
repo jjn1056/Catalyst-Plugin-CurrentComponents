@@ -3,21 +3,18 @@ use Test::Most;
 {
   package MyApp::Model::CurrentModel;
   $INC{'MyApp/Model/CurrentModel.pm'} = __FILE__;
-
   use base 'Catalyst::Model';
 
   package MyApp::Model::CurrentModel2;
   $INC{'MyApp/Model/CurrentModel2.pm'} = __FILE__;
-
   use base 'Catalyst::Model';
+
   package MyApp::View::CurrentView;
   $INC{'MyApp/View/CurrentView.pm'} = __FILE__;
-
   use base 'Catalyst::View';
 
   package MyApp::Controller::CurrentModel;
   $INC{'MyApp/Controller/CurrentModel.pm'} = __FILE__;
-
   use base 'Catalyst::Controller';
 
   sub current_model { return 'CurrentModel' }
@@ -29,7 +26,6 @@ use Test::Most;
 
   package MyApp::Controller::CurrentModelInstance;
   $INC{'MyApp/Controller/CurrentModelInstance.pm'} = __FILE__;
-
   use base 'Catalyst::Controller';
 
   sub current_model_instance { return pop->model('CurrentModel') }
@@ -44,7 +40,7 @@ use Test::Most;
 
   use base 'Catalyst::Controller';
 
-  sub current_model { return 'CurrentView' }
+  sub current_view { return 'CurrentView' }
 
   sub base : Path('') Args(0) {
     my ($self, $c) = @_;
@@ -56,7 +52,7 @@ use Test::Most;
 
   use base 'Catalyst::Controller';
 
-  sub current_model_instance { return pop->model('CurrentView') }
+  sub current_view_instance { return pop->view('CurrentView') }
 
   sub base : Path('') Args(0) {
     my ($self, $c) = @_;
@@ -125,7 +121,11 @@ use Test::Most;
 
   MyApp->config(
     default_model=>'CurrentModel',
-    'Plugin::CurrentComponents' => { model_instance_from_return => 1},
+    'Plugin::CurrentComponents' => {
+      model_instance_from_return => 1,
+      model_instance_from_state => 1,
+      view_instance_from_return => 1,
+    },
   );
   
   MyApp->setup;
