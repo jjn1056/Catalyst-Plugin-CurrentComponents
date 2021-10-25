@@ -4,8 +4,6 @@ use Moose::Role;
 
 requires 'attributes';
 
-our $VERSION = '0.008';
-
 has current_model => (
   is => 'ro',
   required => 1,
@@ -14,13 +12,13 @@ has current_model => (
 
   sub _build_current_model {
     my $self = shift;
-    my ($current_view) = @{$self->attributes->{Model} || []};
-    return $current_view;
+    my ($current_model) = @{$self->attributes->{Model} || []};
+    return $current_model;
   }
 
 around 'execute', sub {
   my ($orig, $self, $controller, $ctx, @args) = @_;
-  $ctx->stash(current_view=>$self->current_view);
+  $ctx->stash(current_model=>$self->current_model) if $self->current_model;
   return $self->$orig($controller, $ctx, @args);
 };
 
@@ -41,7 +39,7 @@ Catalyst::ActionRole::CurrentModel - Set the current model via an action attribu
     extends 'Catalyst::Controller';
 
     # Same as $c->stash(current_model => 'Schema::Person');
-    sub root :Chained(/) Does(CurrentModel) View(Schema::Person) {
+    sub root :Chained(/) Does(CurrentModel) Model(Schema::Person) {
       my ($self, $c) = @_;
     }
 

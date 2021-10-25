@@ -4,8 +4,6 @@ use Moose::Role;
 
 requires 'attributes';
 
-our $VERSION = '0.008';
-
 has current_view => (
   is => 'ro',
   required => 1,
@@ -20,7 +18,7 @@ has current_view => (
 
 around 'execute', sub {
   my ($orig, $self, $controller, $ctx, @args) = @_;
-  $ctx->stash(current_view=>$self->current_view);
+  $ctx->stash(current_view=>$self->current_view) if $self->current_view;
   return $self->$orig($controller, $ctx, @args);
 };
 
